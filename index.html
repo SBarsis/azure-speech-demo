@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Azure Speech Service Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@azure/cognitiveservices-speech-sdk@1.16.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle.js"></script>
+</head>
+<body>
+    <h1>Azure Speech Service Demo</h1>
+    <button onclick="startRecognition()">Start Recognition</button>
+    <p id="status">Status: Ready</p>
+    <p id="result">Recognized Text: </p>
+    <script>
+        const subscriptionKey = 'YourSubscriptionKey';
+        const serviceRegion = 'YourServiceRegion';
+
+        function startRecognition() {
+            const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(subscriptionKey, serviceRegion);
+            const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+            const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+
+            recognizer.recognizeOnceAsync(result => {
+                let statusElement = document.getElementById('status');
+                let resultElement = document.getElementById('result');
+
+                if (result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+                    statusElement.innerHTML = 'Status: Recognition Successful';
+                    resultElement.innerHTML = `Recognized Text: ${result.text}`;
+                    speakText(result.text);
+                } else {
+                    statusElement.innerHTML = 'Status: Recognition Failed';
+                    resultElement.innerHTML = 'Recognized Text: No speech could be recognized';
+                }
+
+                recognizer.close();
+            });
+        }
+
+        function speakText(text) {
+            const speechConfig = SpeechSDK.SpeechConfig.fromSubscription(subscriptionKey, serviceRegion);
+            const synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig);
+
+            synthesizer.speakTextAsync(
+                text,
+                result => {
+                    if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
+                        console.log('Speech synthesis finished.');
+                    } else {
+                        console.error('Speech synthesis failed.');
+                    }
+                    synthesizer.close();
+                },
+                error => {
+                    console.error(error);
+                    synthesizer.close();
+                }
+            );
+        }
+    </script>
+</body>
+</html>
